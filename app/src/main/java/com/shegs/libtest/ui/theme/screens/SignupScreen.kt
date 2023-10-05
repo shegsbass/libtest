@@ -38,6 +38,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
@@ -62,6 +63,8 @@ import com.shegs.hng_auth_library.model.SignupRequest
 import com.shegs.hng_auth_library.network.ApiResponse
 import com.shegs.hng_auth_library.ui.screens.SignUpScreen
 import com.shegs.libtest.apiService
+import com.shegs.libtest.isValidEmail
+import com.shegs.libtest.validatePassword
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,15 +73,21 @@ import kotlinx.coroutines.launch
 
 fun SignupUi(navController: NavHostController) {
 
-    var name by remember {mutableStateOf("")}
-    var email by remember {mutableStateOf("")}
-    var password by remember {mutableStateOf("")}
-    var confirm_password by remember {mutableStateOf("")}
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirm_password by remember { mutableStateOf("") }
     var spinning by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) } // Store password error message
+    var confirmError by remember { mutableStateOf<String?>(null) }
 
     val signupRepository = AuthLibrary.createSignupRepository(apiService)
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
     ) {
@@ -107,13 +116,33 @@ fun SignupUi(navController: NavHostController) {
                 RoundedTextField(
                     value = name,
                     visualTransformation = null,
-                    keyboardActions = null,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    ),
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next,
                         keyboardType = KeyboardType.Text
                     ),
                     placeHolderText = "Enter Username",
-                    onValueChange = {name = it})
+                    onValueChange = {
+                            newName ->
+                        name = newName
+                        showError = newName.contains(" ")
+                    },
+                )
+                if (showError) {
+                    Text(
+                        text = "Error: Username should not contain spaces",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
@@ -122,16 +151,36 @@ fun SignupUi(navController: NavHostController) {
                 RoundedTextField(
                     value = email,
                     visualTransformation = null,
-                    keyboardActions = null,
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            focusManager.moveFocus(FocusDirection.Down)
+                        }
+                    ),
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Next,
                         keyboardType = KeyboardType.Email
                     ),
                     placeHolderText = "Email Address",
-                    onValueChange = {email = it})
+                    onValueChange = { newEmail ->
+                        email = newEmail
+                        emailError = if (isValidEmail(newEmail)) null else "Invalid email"
+                    },
+                )
+                // Display error message if email is invalid
+                emailError?.let { error ->
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
+
             item {
                 var passwordVisibility by remember {
                     mutableStateOf(false)
@@ -159,10 +208,27 @@ fun SignupUi(navController: NavHostController) {
                     ),
                     value = password,
                     placeHolderText = "Enter Password",
-                    onValueChange = {password = it})
+                    onValueChange = {newPassword ->
+                        password = newPassword
+                        passwordError = validatePassword(newPassword)
+                    }
+                )
+                // Display password error message
+                passwordError?.let { error ->
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
+
             item {
                 var passwordVisibility by remember {
                     mutableStateOf(false)
@@ -189,7 +255,23 @@ fun SignupUi(navController: NavHostController) {
                         }
                     ),
                     placeHolderText = "Enter Password Again",
-                    onValueChange = {confirm_password = it})
+                    onValueChange = {newConfirmPassword ->
+                        confirm_password = newConfirmPassword
+                        confirmError = if (password == newConfirmPassword) null else "Passwords do not match"
+                    }
+                )
+                // Display confirm password error message
+                confirmError?.let { error ->
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
@@ -215,7 +297,11 @@ fun SignupUi(navController: NavHostController) {
                                 is ApiResponse.Success -> {
                                     // Handle successful signup
                                     val user = result.data
-                                    Toast.makeText(context, "Signup successful: ${user.data.name}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Signup successful: ${user.data.name}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                     navController.navigate("LoginScreen")
                                 }
 
@@ -223,7 +309,11 @@ fun SignupUi(navController: NavHostController) {
                                     // Handle signup error
                                     val errorMessage = result.message
                                     // Display error message to the user
-                                    Toast.makeText(context, "Signup failed: $errorMessage", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        context,
+                                        "Signup failed: $errorMessage",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                             spinning = false
@@ -287,9 +377,9 @@ fun SignupUi(navController: NavHostController) {
                         Spacer(modifier = Modifier.padding(horizontal = 2.dp))
                         ClickableText(
                             text = buildAnnotatedString {
-                                                        Text(text = "Login")
+                                Text(text = "Login")
                             },
-                            modifier = Modifier.clickable {  },
+                            modifier = Modifier.clickable { },
                             style = TextStyle(
                                 fontSize = 14.sp,
                                 fontFamily = FontFamily(Font(com.shegs.hng_auth_library.R.font.inter_regular)),
@@ -300,16 +390,16 @@ fun SignupUi(navController: NavHostController) {
                                 navController.navigate("LoginScreen")
                             },
 
-                        )
+                            )
                     }
                 }
             }
 
 
-
         }
     }
 }
+
 
 @Preview
 @Composable

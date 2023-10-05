@@ -61,6 +61,8 @@ import com.shegs.hng_auth_library.common.TextFieldHeaderText
 import com.shegs.hng_auth_library.model.LoginRequest
 import com.shegs.hng_auth_library.network.ApiResponse
 import com.shegs.libtest.apiService
+import com.shegs.libtest.isValidEmail
+import com.shegs.libtest.validatePassword
 import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -72,6 +74,8 @@ fun LoginScreen(navController: NavHostController) {
     val dataStoreRepository = AuthLibrary.createDataStoreRepository(context)
     val loginRepository = AuthLibrary.createLoginRepository(apiService, dataStoreRepository)
     var spinning by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -118,7 +122,22 @@ fun LoginScreen(navController: NavHostController) {
                         keyboardType = KeyboardType.Email
                     ),
                     placeHolderText = "Email Address",
-                    onValueChange = { email = it })
+                    onValueChange = { newEmail ->
+                        email = newEmail
+                        emailError = if (isValidEmail(newEmail)) null else "Invalid email"
+                    }
+                )
+                // Display error message if email is invalid
+                emailError?.let { error ->
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
@@ -149,7 +168,23 @@ fun LoginScreen(navController: NavHostController) {
                     ),
                     value = password,
                     placeHolderText = "Enter Password",
-                    onValueChange = { password = it })
+                    onValueChange = { newPassword ->
+                        password = newPassword
+                        passwordError = validatePassword(newPassword)
+                    }
+                )
+                // Display password error message
+                passwordError?.let { error ->
+                    Text(
+                        text = error,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
             }
@@ -277,5 +312,4 @@ fun LoginScreen(navController: NavHostController) {
 
         }
     }
-
 }
