@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -69,84 +71,13 @@ fun LoginScreen(navController: NavHostController) {
     val context = LocalContext.current
     val dataStoreRepository = AuthLibrary.createDataStoreRepository(context)
     val loginRepository = AuthLibrary.createLoginRepository(apiService, dataStoreRepository)
-    var loading by remember { mutableStateOf(false) }
+    var spinning by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(16.dp),
-//        verticalArrangement = Arrangement.Center,
-//        horizontalAlignment = Alignment.CenterHorizontally
-//    ) {
-//        TextField(
-//            value = email,
-//            label = {
-//                Text(text = "Email")
-//            },
-//            onValueChange = { email = it },
-//            modifier = Modifier.fillMaxWidth(),
-//            keyboardOptions = KeyboardOptions.Default.copy(
-//                imeAction = ImeAction.Next
-//            ),
-//            keyboardActions = KeyboardActions(
-//                onNext = { /* Focus on the next field */ }
-//            )
-//        )
-//
-//        TextField(
-//            value = password,
-//            label = {
-//                Text(text = "Password")
-//            },
-//            onValueChange = { password = it },
-//            modifier = Modifier.fillMaxWidth(),
-//            keyboardOptions = KeyboardOptions.Default.copy(
-//                imeAction = ImeAction.Next
-//            ),
-//            keyboardActions = KeyboardActions(
-//                onNext = { /* Focus on the next field */ }
-//            )
-//        )
-//
-//        Button(
-//            onClick = {
-//                // This code will be executed when the button is clicked
-//                coroutineScope.launch {
-//                    val result = loginRepository.login(
-//                        LoginRequest(
-//                            email = email,
-//                            password = password
-//                        )
-//                    )
-//                    when (result) {
-//                        is ApiResponse.Success -> {
-//                            // Handle successful signup
-//                            val user = result.data
-//                            Toast.makeText(context, "Login successful: ${user.data.email}", Toast.LENGTH_SHORT).show()
-//                            navController.navigate("profileScreen")
-//                        }
-//
-//                        is ApiResponse.Error -> {
-//                            // Handle signup error
-//                            val errorMessage = result.message
-//                            // Display error message to the user
-//                            Toast.makeText(context, "Login failed: $errorMessage", Toast.LENGTH_SHORT).show()
-//                        }
-//                    }
-//                }
-//            },
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp)
-//        ) {
-//            Text("Sign Up")
-//        }
-//    }
 
     Scaffold(
     ) {
@@ -230,6 +161,7 @@ fun LoginScreen(navController: NavHostController) {
                     onClick = {
                         // This code will be executed when the button is clicked
                         coroutineScope.launch {
+                            spinning = true
                             val result = loginRepository.login(
                                 LoginRequest(
                                     email = email,
@@ -251,7 +183,6 @@ fun LoginScreen(navController: NavHostController) {
 
                                 is ApiResponse.Error -> {
                                     // Handle signup error
-
                                     val errorMessage = result.message
                                     // Display error message to the user
                                     Toast.makeText(
@@ -261,6 +192,7 @@ fun LoginScreen(navController: NavHostController) {
                                     ).show()
                                 }
                             }
+                            spinning = false
                         }
                     },
                     modifier = Modifier
@@ -285,21 +217,22 @@ fun LoginScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
             }
 
-//            item {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(16.dp),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    CircularProgressIndicator(
-//                        modifier = Modifier
-//                            .height(70.dp)
-//                            .width(70.dp)
-//                            .padding(8.dp)
-//                    )
-//                }
-//            }
+            item {
+                if (spinning) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .padding(8.dp)
+                        )
+                    }
+                }
+            }
 
             item {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))

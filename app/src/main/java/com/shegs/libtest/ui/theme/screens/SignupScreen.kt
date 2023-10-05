@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,7 +74,7 @@ fun SignupUi(navController: NavHostController) {
     var email by remember {mutableStateOf("")}
     var password by remember {mutableStateOf("")}
     var confirm_password by remember {mutableStateOf("")}
-    var loading by remember { mutableStateOf(true) }
+    var spinning by remember { mutableStateOf(false) }
 
     val signupRepository = AuthLibrary.createSignupRepository(apiService)
     val coroutineScope = rememberCoroutineScope()
@@ -85,7 +87,7 @@ fun SignupUi(navController: NavHostController) {
             modifier = Modifier.padding(start = 34.dp, end = 34.dp)
         ) {
             item {
-                Spacer(modifier = Modifier.padding(vertical = 50.dp))
+                Spacer(modifier = Modifier.padding(vertical = 28.dp))
             }
             item {
                 HeaderText(text = "Let’s get you \nstarted")
@@ -98,7 +100,7 @@ fun SignupUi(navController: NavHostController) {
                 SubtitleText(text = "Your journey begins here. This will \nonly take a few minutes.")
             }
             item {
-                Spacer(modifier = Modifier.padding(vertical = 40.dp))
+                Spacer(modifier = Modifier.padding(vertical = 30.dp))
             }
             item {
                 TextFieldHeaderText(text = "Full Name")
@@ -193,13 +195,14 @@ fun SignupUi(navController: NavHostController) {
             }
 
             item {
-                Spacer(modifier = Modifier.padding(vertical = 20.dp))
+                Spacer(modifier = Modifier.padding(vertical = 16.dp))
             }
             item {
                 LibraryButton(
                     onClick = {
                         // This code will be executed when the button is clicked
                         coroutineScope.launch {
+                            spinning = true
                             val result = signupRepository.signup(
                                 SignupRequest(
                                     name = name,
@@ -223,6 +226,7 @@ fun SignupUi(navController: NavHostController) {
                                     Toast.makeText(context, "Signup failed: $errorMessage", Toast.LENGTH_SHORT).show()
                                 }
                             }
+                            spinning = false
                         }
                     },
                     modifier = Modifier
@@ -239,10 +243,26 @@ fun SignupUi(navController: NavHostController) {
                         color = Color(0xFFFFFFFF),
                         textAlign = TextAlign.Center,
                     ),
-                    shape = RoundedCornerShape(size = 10.dp)
+                    shape = RoundedCornerShape(size = 10.dp),
                 )
             }
 
+            item {
+                if (spinning) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .padding(8.dp)
+                        )
+                    }
+                }
+            }
 
             item {
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
