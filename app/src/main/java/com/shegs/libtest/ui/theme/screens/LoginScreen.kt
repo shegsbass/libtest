@@ -99,7 +99,8 @@ fun LoginScreen(navController: NavHostController) {
 
             item {
                 SubtitleText(
-                    text = "Hello again! We’ve missed you.\n" +
+                    text = "Hello again! This is to demonstrate\n" +
+                            "that the Auth library is working\n" +
                             "Let’s dive you back in already."
                 )
             }

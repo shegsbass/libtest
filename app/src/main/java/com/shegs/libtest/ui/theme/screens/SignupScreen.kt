@@ -97,13 +97,13 @@ fun SignupUi(navController: NavHostController) {
             }
 
             item {
-                SubtitleText(text = "Your journey begins here. This will \nonly take a few minutes.")
+                SubtitleText(text = "Your journey begins here. This is a proof \nthat the auth library is working.")
             }
             item {
                 Spacer(modifier = Modifier.padding(vertical = 30.dp))
             }
             item {
-                TextFieldHeaderText(text = "Full Name")
+                TextFieldHeaderText(text = "Username")
                 RoundedTextField(
                     value = name,
                     visualTransformation = null,
@@ -112,7 +112,7 @@ fun SignupUi(navController: NavHostController) {
                         imeAction = ImeAction.Next,
                         keyboardType = KeyboardType.Text
                     ),
-                    placeHolderText = "FirstName and LastName",
+                    placeHolderText = "Enter Username",
                     onValueChange = {name = it})
                 Spacer(modifier = Modifier.padding(vertical = 10.dp))
 
